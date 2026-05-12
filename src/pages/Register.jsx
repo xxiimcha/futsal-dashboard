@@ -1,6 +1,65 @@
-import { Link } from "react-router-dom"
+import { useState } from "react"
+import { Link, useNavigate } from "react-router-dom"
 
 export default function Register() {
+  const navigate = useNavigate()
+
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    password: ""
+  })
+
+  const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState("")
+  const [error, setError] = useState("")
+
+  const handleChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setLoading(true)
+    setMessage("")
+    setError("")
+
+    try {
+      const response = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(formData)
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setError(data.message || "Registration failed")
+        return
+      }
+
+      setMessage("Account created successfully")
+      setFormData({
+        fullName: "",
+        email: "",
+        password: ""
+      })
+
+      setTimeout(() => {
+        navigate("/login")
+      }, 1000)
+    } catch (err) {
+      setError("Cannot connect to server")
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-green-50 px-4">
       <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-lg border border-green-100">
@@ -12,19 +71,57 @@ export default function Register() {
           <p className="mt-2 text-sm text-slate-500">Register a coach account</p>
         </div>
 
-        <div className="space-y-4">
-          <input className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500" type="text" placeholder="Full name" />
-          <input className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500" type="email" placeholder="Email address" />
-          <input className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500" type="password" placeholder="Password" />
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {message && (
+            <p className="rounded-xl bg-green-100 px-4 py-3 text-sm text-green-700">
+              {message}
+            </p>
+          )}
 
-          <button className="w-full rounded-xl bg-green-500 py-3 font-semibold text-white hover:bg-green-600">
-            Register
+          {error && (
+            <p className="rounded-xl bg-red-100 px-4 py-3 text-sm text-red-700">
+              {error}
+            </p>
+          )}
+
+          <input
+            name="fullName"
+            value={formData.fullName}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
+            type="text"
+            placeholder="Full name"
+          />
+
+          <input
+            name="email"
+            value={formData.email}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
+            type="email"
+            placeholder="Email address"
+          />
+
+          <input
+            name="password"
+            value={formData.password}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
+            type="password"
+            placeholder="Password"
+          />
+
+          <button
+            disabled={loading}
+            className="w-full rounded-xl bg-green-500 py-3 font-semibold text-white hover:bg-green-600 disabled:opacity-60"
+          >
+            {loading ? "Registering..." : "Register"}
           </button>
 
           <Link to="/login" className="block text-center text-sm font-medium text-green-600">
             Back to Login
           </Link>
-        </div>
+        </form>
       </div>
     </div>
   )
