@@ -33,7 +33,7 @@ export default function Players({ onLogout }) {
 
   const fetchPlayers = async () => {
     try {
-      const response = await fetch('${API_URL}/api/players', {
+      const response = await fetch(`${API_URL}/api/players`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -124,7 +124,7 @@ export default function Players({ onLogout }) {
 
     const url = editingId
       ? `${API_URL}/api/players/${editingId}`
-      : '${API_URL}/api/players'
+      : `${API_URL}/api/players`
 
     const method = editingId ? "PUT" : "POST"
 

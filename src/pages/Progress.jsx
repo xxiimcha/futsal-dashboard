@@ -11,7 +11,7 @@ export default function Progress({ onLogout }) {
 
   const fetchProgress = async () => {
     try {
-      const response = await fetch('${API_URL}/api/progress', {
+      const response = await fetch(`${API_URL}/api/progress`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -51,7 +51,7 @@ export default function Progress({ onLogout }) {
       <div className="mb-6">
         <h2 className="text-2xl font-bold">Progress Monitoring</h2>
         <p className="text-sm text-slate-500">
-          Track each participant's VR training completion
+          Track each participant`s VR training completion
         </p>
       </div>
 

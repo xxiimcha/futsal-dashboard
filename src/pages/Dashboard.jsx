@@ -11,7 +11,7 @@ export default function Dashboard({ onLogout }) {
 
   const fetchDashboardData = async () => {
     try {
-      const response = await fetch('${API_URL}/api/progress', {
+      const response = await fetch(`${API_URL}/api/progress`, {
         headers: {
           Authorization: `Bearer ${token}`
         }
