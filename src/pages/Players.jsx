@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import Layout from "../components/Layout"
+import API_URL from "../config/api"
 
 const initialFormData = {
   studentId: "",
@@ -32,7 +33,7 @@ export default function Players({ onLogout }) {
 
   const fetchPlayers = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/players", {
+      const response = await fetch('${API_URL}/api/players', {
         headers: {
           Authorization: `Bearer ${token}`
         }
@@ -122,8 +123,8 @@ export default function Players({ onLogout }) {
     setError("")
 
     const url = editingId
-      ? `http://localhost:5000/api/players/${editingId}`
-      : "http://localhost:5000/api/players"
+      ? `${API_URL}/api/players/${editingId}`
+      : '${API_URL}/api/players'
 
     const method = editingId ? "PUT" : "POST"
 
@@ -173,7 +174,7 @@ export default function Players({ onLogout }) {
     closeConfirmModal()
 
     try {
-      const response = await fetch(`http://localhost:5000/api/players/${id}`, {
+      const response = await fetch(`${API_URL}/api/players/${id}`, {
         method: "DELETE",
         headers: {
           Authorization: `Bearer ${token}`

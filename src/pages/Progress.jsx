@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react"
 import Layout from "../components/Layout"
+import API_URL from "../config/api"
 
 export default function Progress({ onLogout }) {
   const [players, setPlayers] = useState([])
@@ -10,7 +11,7 @@ export default function Progress({ onLogout }) {
 
   const fetchProgress = async () => {
     try {
-      const response = await fetch("http://localhost:5000/api/progress", {
+      const response = await fetch('${API_URL}/api/progress', {
         headers: {
           Authorization: `Bearer ${token}`
         }
