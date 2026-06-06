@@ -1,16 +1,18 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import API_URL from "../config/api"
 
-export default function Login({ onLogin }) {
+export default function ResetPassword() {
+  const { token } = useParams()
   const navigate = useNavigate()
 
   const [formData, setFormData] = useState({
-    email: "",
-    password: ""
+    password: "",
+    confirmPassword: ""
   })
 
   const [loading, setLoading] = useState(false)
+  const [message, setMessage] = useState("")
   const [error, setError] = useState("")
 
   const handleChange = (e) => {
@@ -23,32 +25,38 @@ export default function Login({ onLogin }) {
   const handleSubmit = async (e) => {
     e.preventDefault()
     setLoading(true)
+    setMessage("")
     setError("")
 
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match")
+      setLoading(false)
+      return
+    }
+
     try {
-      const response = await fetch(`${API_URL}/api/auth/login`, {
-        method: "POST",
+      const response = await fetch(`${API_URL}/api/auth/reset-password/${token}`, {
+        method: "PUT",
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          password: formData.password
+        })
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.message || "Login failed")
+        setError(data.message || "Failed to reset password")
         return
       }
 
-      localStorage.setItem("token", data.token)
-      localStorage.setItem("coach", JSON.stringify(data.coach))
+      setMessage(data.message || "Password has been reset successfully")
 
-      if (onLogin) {
-        onLogin(data.coach)
-      }
-
-      navigate("/dashboard")
+      setTimeout(() => {
+        navigate("/login")
+      }, 1500)
     } catch (err) {
       setError("Cannot connect to server")
     } finally {
@@ -64,14 +72,20 @@ export default function Login({ onLogin }) {
             FV
           </div>
           <h1 className="text-2xl font-bold text-slate-800">
-            Futsal VR Dashboard
+            Reset Password
           </h1>
           <p className="mt-2 text-sm text-slate-500">
-            Coach monitoring portal
+            Create a new password for your coach account.
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          {message && (
+            <p className="rounded-xl bg-green-100 px-4 py-3 text-sm text-green-700">
+              {message}
+            </p>
+          )}
+
           {error && (
             <p className="rounded-xl bg-red-100 px-4 py-3 text-sm text-red-700">
               {error}
@@ -79,46 +93,37 @@ export default function Login({ onLogin }) {
           )}
 
           <input
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-            type="email"
-            placeholder="Email address"
-            required
-          />
-
-          <input
             name="password"
             value={formData.password}
             onChange={handleChange}
             className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
             type="password"
-            placeholder="Password"
+            placeholder="New password"
             required
           />
 
-          <div className="text-right">
-            <Link
-              to="/forgot-password"
-              className="text-sm font-medium text-green-600 hover:text-green-700"
-            >
-              Forgot password?
-            </Link>
-          </div>
+          <input
+            name="confirmPassword"
+            value={formData.confirmPassword}
+            onChange={handleChange}
+            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
+            type="password"
+            placeholder="Confirm new password"
+            required
+          />
 
           <button
             disabled={loading}
             className="w-full rounded-xl bg-green-500 py-3 font-semibold text-white hover:bg-green-600 disabled:opacity-60"
           >
-            {loading ? "Logging in..." : "Login"}
+            {loading ? "Resetting..." : "Reset Password"}
           </button>
 
           <Link
-            to="/register"
+            to="/login"
             className="block text-center text-sm font-medium text-green-600"
           >
-            Create Coach Account
+            Back to Login
           </Link>
         </form>
       </div>

@@ -5,6 +5,8 @@ import Register from "./pages/Register"
 import Dashboard from "./pages/Dashboard"
 import Players from "./pages/Players"
 import Progress from "./pages/Progress"
+import ForgotPassword from "./pages/ForgotPassword"
+import ResetPassword from "./pages/ResetPassword"
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -17,6 +19,8 @@ export default function App() {
       <Route path="/dashboard" element={isLoggedIn ? <Dashboard onLogout={() => setIsLoggedIn(false)} /> : <Navigate to="/login" />} />
       <Route path="/players" element={isLoggedIn ? <Players onLogout={() => setIsLoggedIn(false)} /> : <Navigate to="/login" />} />
       <Route path="/progress" element={isLoggedIn ? <Progress onLogout={() => setIsLoggedIn(false)} /> : <Navigate to="/login" />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
     </Routes>
   )
 }
