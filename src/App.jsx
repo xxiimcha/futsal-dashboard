@@ -7,6 +7,7 @@ import Players from "./pages/Players"
 import Progress from "./pages/Progress"
 import ForgotPassword from "./pages/ForgotPassword"
 import ResetPassword from "./pages/ResetPassword"
+import VerifyEmail from "./pages/VerifyEmail"
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -21,6 +22,7 @@ export default function App() {
       <Route path="/progress" element={isLoggedIn ? <Progress onLogout={() => setIsLoggedIn(false)} /> : <Navigate to="/login" />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/verify-email/:token" element={<VerifyEmail />} />
     </Routes>
   )
 }

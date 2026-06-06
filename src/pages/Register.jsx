@@ -1,32 +1,76 @@
 import { useState } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { Link } from "react-router-dom"
 import API_URL from "../config/api"
 
 export default function Register() {
-  const navigate = useNavigate()
-
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    password: ""
+    password: "",
+    confirmPassword: ""
   })
 
+  const [fieldErrors, setFieldErrors] = useState({})
   const [loading, setLoading] = useState(false)
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
 
+  const validateForm = () => {
+    const errors = {}
+
+    if (!formData.fullName.trim()) {
+      errors.fullName = "Full name is required"
+    } else if (formData.fullName.trim().length < 3) {
+      errors.fullName = "Full name must be at least 3 characters"
+    }
+
+    if (!formData.email.trim()) {
+      errors.email = "Email address is required"
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Enter a valid email address"
+    }
+
+    if (!formData.password) {
+      errors.password = "Password is required"
+    } else if (formData.password.length < 6) {
+      errors.password = "Password must be at least 6 characters"
+    }
+
+    if (!formData.confirmPassword) {
+      errors.confirmPassword = "Please confirm your password"
+    } else if (formData.password !== formData.confirmPassword) {
+      errors.confirmPassword = "Passwords do not match"
+    }
+
+    setFieldErrors(errors)
+
+    return Object.keys(errors).length === 0
+  }
+
   const handleChange = (e) => {
+    const { name, value } = e.target
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
+    })
+
+    setFieldErrors({
+      ...fieldErrors,
+      [name]: ""
     })
   }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    setLoading(true)
     setMessage("")
     setError("")
+
+    if (!validateForm()) {
+      return
+    }
+
+    setLoading(true)
 
     try {
       const response = await fetch(`${API_URL}/api/auth/register`, {
@@ -34,7 +78,11 @@ export default function Register() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          fullName: formData.fullName.trim(),
+          email: formData.email.trim().toLowerCase(),
+          password: formData.password
+        })
       })
 
       const data = await response.json()
@@ -44,16 +92,14 @@ export default function Register() {
         return
       }
 
-      setMessage("Account created successfully")
+      setMessage(data.message || "Account created successfully. Please verify your email.")
       setFormData({
         fullName: "",
         email: "",
-        password: ""
+        password: "",
+        confirmPassword: ""
       })
-
-      setTimeout(() => {
-        navigate("/login")
-      }, 1000)
+      setFieldErrors({})
     } catch (err) {
       setError("Cannot connect to server")
     } finally {
@@ -62,14 +108,17 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-green-50 px-4">
-      <div className="w-full max-w-md rounded-3xl bg-white p-8 shadow-lg border border-green-100">
+    <div className="flex min-h-screen items-center justify-center bg-green-50 px-4">
+      <div className="w-full max-w-md rounded-3xl border border-green-100 bg-white p-8 shadow-lg">
         <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-green-500 text-2xl font-bold text-white">
             FV
           </div>
+
           <h1 className="text-2xl font-bold text-slate-800">Create Account</h1>
-          <p className="mt-2 text-sm text-slate-500">Register a coach account</p>
+          <p className="mt-2 text-sm text-slate-500">
+            Register a coach account
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -85,41 +134,95 @@ export default function Register() {
             </p>
           )}
 
-          <input
-            name="fullName"
-            value={formData.fullName}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-            type="text"
-            placeholder="Full name"
-          />
+          <div>
+            <input
+              name="fullName"
+              value={formData.fullName}
+              onChange={handleChange}
+              className={`w-full rounded-xl border px-4 py-3 outline-none ${
+                fieldErrors.fullName
+                  ? "border-red-300 focus:border-red-500"
+                  : "border-slate-200 focus:border-green-500"
+              }`}
+              type="text"
+              placeholder="Full name"
+            />
 
-          <input
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-            type="email"
-            placeholder="Email address"
-          />
+            {fieldErrors.fullName && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.fullName}</p>
+            )}
+          </div>
 
-          <input
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-            type="password"
-            placeholder="Password"
-          />
+          <div>
+            <input
+              name="email"
+              value={formData.email}
+              onChange={handleChange}
+              className={`w-full rounded-xl border px-4 py-3 outline-none ${
+                fieldErrors.email
+                  ? "border-red-300 focus:border-red-500"
+                  : "border-slate-200 focus:border-green-500"
+              }`}
+              type="email"
+              placeholder="Email address"
+            />
+
+            {fieldErrors.email && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.email}</p>
+            )}
+          </div>
+
+          <div>
+            <input
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              className={`w-full rounded-xl border px-4 py-3 outline-none ${
+                fieldErrors.password
+                  ? "border-red-300 focus:border-red-500"
+                  : "border-slate-200 focus:border-green-500"
+              }`}
+              type="password"
+              placeholder="Password"
+            />
+
+            {fieldErrors.password && (
+              <p className="mt-1 text-xs text-red-600">{fieldErrors.password}</p>
+            )}
+          </div>
+
+          <div>
+            <input
+              name="confirmPassword"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              className={`w-full rounded-xl border px-4 py-3 outline-none ${
+                fieldErrors.confirmPassword
+                  ? "border-red-300 focus:border-red-500"
+                  : "border-slate-200 focus:border-green-500"
+              }`}
+              type="password"
+              placeholder="Confirm password"
+            />
+
+            {fieldErrors.confirmPassword && (
+              <p className="mt-1 text-xs text-red-600">
+                {fieldErrors.confirmPassword}
+              </p>
+            )}
+          </div>
 
           <button
             disabled={loading}
             className="w-full rounded-xl bg-green-500 py-3 font-semibold text-white hover:bg-green-600 disabled:opacity-60"
           >
-            {loading ? "Registering..." : "Register"}
+            {loading ? "Creating account..." : "Register"}
           </button>
 
-          <Link to="/login" className="block text-center text-sm font-medium text-green-600">
+          <Link
+            to="/login"
+            className="block text-center text-sm font-medium text-green-600"
+          >
             Back to Login
           </Link>
         </form>
