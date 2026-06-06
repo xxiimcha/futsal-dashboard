@@ -2,13 +2,38 @@ import { useEffect, useState } from "react"
 import Layout from "../components/Layout"
 import API_URL from "../config/api"
 
+const positionOptions = [
+  {
+    value: "Pivot",
+    title: "Pivot",
+    subtitle: "Target",
+    description: "Main scorer; receives passes and finishes attacks."
+  },
+  {
+    value: "Ala",
+    title: "Ala",
+    subtitle: "Left/Right Winger",
+    description: "Supports both offense and defense; creates chances and helps defend."
+  },
+  {
+    value: "Fixo",
+    title: "Fixo",
+    subtitle: "Fixed Defender",
+    description: "Defensive leader; stops attacks and starts the build-up."
+  },
+  {
+    value: "Goalkeeper",
+    title: "Goalkeeper",
+    subtitle: "Keeper",
+    description: "Protects the goal and initiates counterattacks."
+  }
+]
+
 const initialFormData = {
   studentId: "",
   fullName: "",
   team: "",
-  level: "Beginner",
-  completedDrills: 0,
-  score: 0
+  position: "Pivot"
 }
 
 const initialConfirmModal = {
@@ -30,6 +55,10 @@ export default function Players({ onLogout }) {
   const [loading, setLoading] = useState(false)
 
   const token = localStorage.getItem("token")
+
+  const selectedPosition = positionOptions.find(
+    (position) => position.value === formData.position
+  )
 
   const fetchPlayers = async () => {
     try {
@@ -61,11 +90,30 @@ export default function Players({ onLogout }) {
 
     setFormData({
       ...formData,
-      [name]: name === "completedDrills" || name === "score" ? Number(value) : value
+      [name]: value
     })
   }
 
-  const openConfirmModal = ({ title, message, type = "default", confirmText = "Confirm", onConfirm }) => {
+  const handlePlayerIdChange = (e) => {
+    const numbersOnly = e.target.value.replace(/\D/g, "").slice(0, 4)
+
+    setFormData({
+      ...formData,
+      studentId: numbersOnly ? `P${numbersOnly}` : ""
+    })
+  }
+
+  const getPlayerIdNumber = () => {
+    return formData.studentId.replace("P", "")
+  }
+
+  const openConfirmModal = ({
+    title,
+    message,
+    type = "default",
+    confirmText = "Confirm",
+    onConfirm
+  }) => {
     setConfirmModal({
       show: true,
       title,
@@ -90,12 +138,10 @@ export default function Players({ onLogout }) {
   const openEditModal = (player) => {
     setEditingId(player._id)
     setFormData({
-      studentId: player.studentId,
-      fullName: player.fullName,
+      studentId: player.studentId || "",
+      fullName: player.fullName || "",
       team: player.team || "",
-      level: player.level || "Beginner",
-      completedDrills: player.completedDrills || 0,
-      score: player.score || 0
+      position: player.position || "Pivot"
     })
     setError("")
     setShowModal(true)
@@ -159,6 +205,11 @@ export default function Players({ onLogout }) {
   const handleSubmit = (e) => {
     e.preventDefault()
 
+    if (!/^P[0-9]{4}$/.test(formData.studentId)) {
+      setError("Player ID must contain exactly 4 numbers. Example: P0001.")
+      return
+    }
+
     openConfirmModal({
       title: editingId ? "Update Player" : "Add Player",
       message: editingId
@@ -208,7 +259,7 @@ export default function Players({ onLogout }) {
     <Layout onLogout={onLogout}>
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h2 className="text-2xl font-bold">Players</h2>
+          <h2 className="text-2xl font-bold text-slate-800">Players</h2>
           <p className="text-sm text-slate-500">
             Manage futsal VR participants assigned to your coach account
           </p>
@@ -216,7 +267,7 @@ export default function Players({ onLogout }) {
 
         <button
           onClick={openAddModal}
-          className="rounded-xl bg-green-500 px-5 py-3 text-sm font-semibold text-white hover:bg-green-600"
+          className="rounded-xl bg-green-500 px-5 py-3 text-sm font-semibold text-white shadow-sm hover:bg-green-600"
         >
           Add Player
         </button>
@@ -229,37 +280,53 @@ export default function Players({ onLogout }) {
       )}
 
       <section className="rounded-2xl border border-green-100 bg-white p-5 shadow-sm">
+        <div className="mb-5">
+          <h3 className="text-lg font-bold text-slate-800">Player List</h3>
+          <p className="text-sm text-slate-500">
+            View and manage player profile details and futsal positions.
+          </p>
+        </div>
+
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px] text-left">
+          <table className="w-full min-w-[760px] text-left">
             <thead>
-              <tr className="border-b border-slate-100 text-sm text-slate-500">
-                <th className="py-3">Player ID</th>
-                <th className="py-3">Name</th>
-                <th className="py-3">Team</th>
-                <th className="py-3">Level</th>
-                <th className="py-3">Completed Drills</th>
-                <th className="py-3">Score</th>
-                <th className="py-3">Actions</th>
+              <tr className="border-b border-slate-100 bg-slate-50 text-sm text-slate-500">
+                <th className="rounded-l-xl px-4 py-3">Player ID</th>
+                <th className="px-4 py-3">Name</th>
+                <th className="px-4 py-3">Team</th>
+                <th className="px-4 py-3">Position</th>
+                <th className="rounded-r-xl px-4 py-3">Actions</th>
               </tr>
             </thead>
 
             <tbody>
               {players.length === 0 ? (
                 <tr>
-                  <td colSpan="7" className="py-6 text-center text-sm text-slate-500">
+                  <td colSpan="5" className="py-8 text-center text-sm text-slate-500">
                     No players added yet.
                   </td>
                 </tr>
               ) : (
                 players.map((player) => (
-                  <tr key={player._id} className="border-b border-slate-100 text-sm">
-                    <td className="py-4 font-medium">{player.studentId}</td>
-                    <td className="py-4">{player.fullName}</td>
-                    <td className="py-4">{player.team}</td>
-                    <td className="py-4">{player.level}</td>
-                    <td className="py-4">{player.completedDrills}</td>
-                    <td className="py-4">{player.score}</td>
-                    <td className="py-4">
+                  <tr
+                    key={player._id}
+                    className="border-b border-slate-100 text-sm hover:bg-slate-50"
+                  >
+                    <td className="px-4 py-4 font-semibold text-slate-800">
+                      {player.studentId}
+                    </td>
+
+                    <td className="px-4 py-4">{player.fullName}</td>
+
+                    <td className="px-4 py-4">{player.team || "-"}</td>
+
+                    <td className="px-4 py-4">
+                      <span className="rounded-full bg-green-50 px-3 py-1 text-xs font-semibold text-green-700">
+                        {player.position || "Pivot"}
+                      </span>
+                    </td>
+
+                    <td className="px-4 py-4">
                       <div className="flex gap-2">
                         <button
                           onClick={() => openEditModal(player)}
@@ -285,15 +352,15 @@ export default function Players({ onLogout }) {
       </section>
 
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4">
-          <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-xl">
-            <div className="mb-5 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 px-4 py-6">
+          <div className="flex max-h-[92vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
+            <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5">
               <div>
-                <h3 className="text-xl font-bold">
+                <h3 className="text-xl font-bold text-slate-800">
                   {editingId ? "Update Player" : "Add Player"}
                 </h3>
-                <p className="text-sm text-slate-500">
-                  Fill out the player details below.
+                <p className="mt-1 text-sm text-slate-500">
+                  Enter player details and assign the correct futsal position.
                 </p>
               </div>
 
@@ -306,75 +373,155 @@ export default function Players({ onLogout }) {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="grid gap-4 md:grid-cols-2">
-              <input
-                name="studentId"
-                value={formData.studentId}
-                onChange={handleChange}
-                className="rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-                placeholder="Player ID"
-              />
+            <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+              <div className="grid flex-1 gap-6 overflow-y-auto px-6 py-6 lg:grid-cols-[1.15fr_0.85fr]">
+                <div className="rounded-2xl border border-slate-100 bg-white p-5 shadow-sm">
+                  <h4 className="mb-4 text-base font-bold text-slate-800">
+                    Player Information
+                  </h4>
 
-              <input
-                name="fullName"
-                value={formData.fullName}
-                onChange={handleChange}
-                className="rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-                placeholder="Full name"
-              />
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">
+                        Player ID
+                      </label>
 
-              <input
-                name="team"
-                value={formData.team}
-                onChange={handleChange}
-                className="rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-                placeholder="Team"
-              />
+                      <div className="flex overflow-hidden rounded-xl border border-slate-200 focus-within:border-green-500">
+                        <span className="flex items-center bg-slate-100 px-4 text-sm font-bold text-slate-600">
+                          P
+                        </span>
 
-              <select
-                name="level"
-                value={formData.level}
-                onChange={handleChange}
-                className="rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-              >
-                <option>Beginner</option>
-                <option>Developing</option>
-                <option>Intermediate</option>
-                <option>Advanced</option>
-              </select>
+                        <input
+                          name="studentId"
+                          value={getPlayerIdNumber()}
+                          onChange={handlePlayerIdChange}
+                          className="w-full px-4 py-3 outline-none"
+                          placeholder="0001"
+                          inputMode="numeric"
+                          maxLength="4"
+                          required
+                        />
+                      </div>
 
-              <input
-                name="completedDrills"
-                value={formData.completedDrills}
-                onChange={handleChange}
-                className="rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-                type="number"
-                placeholder="Completed drills"
-              />
+                      <p className="mt-1 text-xs text-slate-400">
+                        Enter 4 numbers only. Example: 0001 will be saved as P0001.
+                      </p>
+                    </div>
 
-              <input
-                name="score"
-                value={formData.score}
-                onChange={handleChange}
-                className="rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
-                type="number"
-                placeholder="Score"
-              />
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">
+                        Full Name
+                      </label>
 
-              <div className="flex gap-3 md:col-span-2">
+                      <input
+                        name="fullName"
+                        value={formData.fullName}
+                        onChange={handleChange}
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
+                        placeholder="Full name"
+                        required
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">
+                        Team
+                      </label>
+
+                      <input
+                        name="team"
+                        value={formData.team}
+                        onChange={handleChange}
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
+                        placeholder="Team"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="mb-2 block text-sm font-semibold text-slate-700">
+                        Position
+                      </label>
+
+                      <select
+                        name="position"
+                        value={formData.position}
+                        onChange={handleChange}
+                        className="w-full rounded-xl border border-slate-200 px-4 py-3 outline-none focus:border-green-500"
+                      >
+                        {positionOptions.map((position) => (
+                          <option key={position.value} value={position.value}>
+                            {position.title} - {position.subtitle}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                </div>
+
+                <aside className="rounded-2xl border border-green-100 bg-green-50 p-5 shadow-sm">
+                  <p className="text-xs font-bold uppercase tracking-wide text-green-700">
+                    Selected Position
+                  </p>
+
+                  <h4 className="mt-2 text-2xl font-bold text-slate-800">
+                    {selectedPosition?.title}
+                  </h4>
+
+                  <p className="text-sm font-semibold text-green-700">
+                    {selectedPosition?.subtitle}
+                  </p>
+
+                  <p className="mt-3 text-sm leading-6 text-slate-600">
+                    {selectedPosition?.description}
+                  </p>
+
+                  <div className="mt-5 grid gap-3">
+                    {positionOptions.map((position) => (
+                      <button
+                        key={position.value}
+                        type="button"
+                        onClick={() =>
+                          setFormData({
+                            ...formData,
+                            position: position.value
+                          })
+                        }
+                        className={`rounded-xl border p-3 text-left transition ${
+                          formData.position === position.value
+                            ? "border-green-400 bg-white shadow-sm"
+                            : "border-green-100 bg-white/70 hover:border-green-300 hover:bg-white"
+                        }`}
+                      >
+                        <p className="text-sm font-bold text-slate-800">
+                          {position.title}{" "}
+                          <span className="font-medium text-slate-500">
+                            ({position.subtitle})
+                          </span>
+                        </p>
+
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          {position.description}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </aside>
+              </div>
+
+              <div className="flex flex-col-reverse gap-3 border-t border-slate-100 bg-slate-50 px-6 py-5 sm:flex-row sm:justify-end">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="rounded-xl border border-slate-200 bg-white px-6 py-3 font-semibold text-slate-600 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+
                 <button
                   disabled={loading}
                   className="rounded-xl bg-green-500 px-6 py-3 font-semibold text-white hover:bg-green-600 disabled:opacity-60"
                 >
                   {loading ? "Saving..." : editingId ? "Update Player" : "Add Player"}
-                </button>
-
-                <button
-                  type="button"
-                  onClick={closeModal}
-                  className="rounded-xl border border-slate-200 px-6 py-3 font-semibold text-slate-600 hover:bg-slate-50"
-                >
-                  Cancel
                 </button>
               </div>
             </form>
